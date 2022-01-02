@@ -1,0 +1,40 @@
+package gg.scala.flavor
+
+import gg.scala.flavor.inject.InjectScope
+import kotlin.properties.Delegates
+import kotlin.reflect.KClass
+
+/**
+ * @author GrowlyX
+ * @since 1/2/2022
+ */
+@Suppress("UNCHECKED_CAST")
+internal class FlavorBinder<T : Any>(
+    val kClass: KClass<out T>
+)
+{
+    val annotationChecks = mutableMapOf<KClass<out Annotation>, (Annotation) -> Boolean>()
+
+    var instance by Delegates.notNull<Any>()
+    var scope = InjectScope.NO_SCOPE
+
+    fun scoped(scope: InjectScope): FlavorBinder<T>
+    {
+        this.scope = scope
+        return this
+    }
+
+    fun to(any: Any): FlavorBinder<T>
+    {
+        instance = any
+        return this
+    }
+
+    inline fun <reified A : Annotation> annotated(
+        noinline lambda: (A) -> Boolean
+    ): FlavorBinder<T>
+    {
+        annotationChecks[A::class] = lambda as (Annotation) -> Boolean
+        return this
+    }
+}
