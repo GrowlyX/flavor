@@ -9,7 +9,7 @@ import kotlin.reflect.KClass
  * @since 1/2/2022
  */
 @Suppress("UNCHECKED_CAST")
-internal class FlavorBinder<T : Any>(
+class FlavorBinder<T : Any>(
     val kClass: KClass<out T>
 )
 {

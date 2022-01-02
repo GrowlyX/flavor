@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
  * @author GrowlyX
  * @since 1/2/2022
  */
-internal class Flavor(
+class Flavor(
     private val initializer: KClass<*>
 )
 {
