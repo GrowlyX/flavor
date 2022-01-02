@@ -161,7 +161,9 @@ class Flavor(
 
             Logger.getAnonymousLogger().info {
                 "[Flavor] Loaded [${
-                    service?.name ?: clazz.java.simpleName
+                    service.name.ifEmpty {
+                        clazz.java.simpleName
+                    }
                 }] in ${milli}ms."
             }
         }
