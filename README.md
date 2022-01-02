@@ -2,11 +2,6 @@
 A light-weight kotlin dependency injection & service management framework. 
 - Flavor is based around [guice](https://github.com/google/guice)'s design.
 
-## Compilation:
-```
-./gradlew build
-```
-
 ## Usage:
 Creating a Flavor instance:
 ```kt
@@ -59,3 +54,8 @@ gg.scala.flavor - package which flavor will scan
 ```
 
 **There is currently no way to disable automatic scanning.**
+
+## Compilation:
+```
+./gradlew build
+```
