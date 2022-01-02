@@ -14,15 +14,18 @@ import kotlin.reflect.KClass
  * @since 1/2/2022
  */
 class Flavor(
-    private val initializer: KClass<*>
+    private val initializer: KClass<*>,
+    private val options: FlavorOptions
 )
 {
     companion object
     {
         @JvmStatic
-        inline fun <reified T> create(): Flavor
+        inline fun <reified T> create(
+            options: FlavorOptions = FlavorOptions()
+        ): Flavor
         {
-            return Flavor(T::class)
+            return Flavor(T::class, options)
         }
     }
 
@@ -84,8 +87,8 @@ class Flavor(
                 close?.invoke(entry.value)
             }
 
-            Logger.getAnonymousLogger().info {
-                "[Flavor] Shutdown [${
+            options.logger.info {
+                "[Services] Shutdown [${
                     service?.name ?: entry.key
                         .java.simpleName
                 }] in ${milli}ms."
@@ -160,8 +163,8 @@ class Flavor(
                 configure?.invoke(singleton)
             }
 
-            Logger.getAnonymousLogger().info {
-                "[Flavor] Loaded [${
+            options.logger.info {
+                "[Services] Loaded [${
                     service.name.ifEmpty {
                         clazz.java.simpleName
                     }
