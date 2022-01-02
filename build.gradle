@@ -1,4 +1,5 @@
 plugins {
+    id "maven-publish"
     id "com.github.johnrengelman.shadow" version "6.1.0"
     id "org.jetbrains.kotlin.jvm" version "1.6.0"
 }
@@ -32,4 +33,12 @@ shadowJar {
     archiveFileName = "flavor.jar"
 }
 
-tasks.build.dependsOn(shadowJar)
+publishing {
+    publications {
+        shadow(MavenPublication) { publication ->
+            project.shadow.component(publication)
+        }
+    }
+}
+
+tasks.build.dependsOn(shadowJar, publishing)
