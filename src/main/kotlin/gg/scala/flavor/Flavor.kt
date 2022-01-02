@@ -150,7 +150,8 @@ class Flavor(
             val configure = clazz.java.declaredMethods
                 .firstOrNull { it.isAnnotationPresent(Configure::class.java) }
 
-            services[clazz] = singleton
+            // singletons should always be non-null
+            services[clazz] = singleton!!
 
             val service = clazz.java
                 .getDeclaredAnnotation(Service::class.java)
