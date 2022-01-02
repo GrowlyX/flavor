@@ -53,7 +53,7 @@ gg.scala.flavor.FlavorTest - registration class
 gg.scala.flavor - package which flavor will scan
 ```
 
-**There is currently no way to disable automatic scanning.**
+**⚠️ There is currently no way to disable automatic scanning.**
 
 ## Compilation:
 ```
