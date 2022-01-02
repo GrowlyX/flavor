@@ -9,7 +9,6 @@ package gg.scala.flavor.service
  * @author GrowlyX
  * @since 1/2/2022
  */
-@Target(AnnotationTarget.TYPE)
 annotation class Service(
     val name: String = ""
 )
