@@ -96,7 +96,7 @@ class Flavor(
         }
     }
 
-    fun tracked(lambda: () -> Unit): Long
+    private fun tracked(lambda: () -> Unit): Long
     {
         val start = System.currentTimeMillis()
         lambda.invoke()
@@ -106,8 +106,15 @@ class Flavor(
 
     private fun scanAndInject(clazz: KClass<*>, instance: Any? = null)
     {
-        val singleton = instance ?: InjectScope.SINGLETON
-            .instanceCreator.invoke(clazz)
+        val singletonRaw = try
+        {
+            InjectScope.SINGLETON
+                .instanceCreator.invoke(clazz)
+        } catch (exception: Exception)
+        {
+            null
+        }
+        val singleton = instance ?: singletonRaw!!
 
         for (field in clazz.java.fields)
         {
@@ -138,6 +145,14 @@ class Flavor(
                 val accessability = field.isAccessible
 
                 binder?.let {
+                    if (binder.scope == InjectScope.SINGLETON)
+                    {
+                        if (singletonRaw == null)
+                        {
+                            return@let
+                        }
+                    }
+
                     field.isAccessible = false
                     field.set(singleton, it.instance)
                     field.isAccessible = accessability
