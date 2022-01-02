@@ -33,12 +33,12 @@ shadowJar {
     archiveFileName = "flavor.jar"
 }
 
-publishing {
-    publications {
-        shadow(MavenPublication) { publication ->
-            project.shadow.component(publication)
-        }
-    }
-}
+//publishing {
+//    publications {
+//        shadow(MavenPublication) { publication ->
+//            project.shadow.component(publication)
+//        }
+//    }
+//}
 
-tasks.build.dependsOn(shadowJar, publishing)
+tasks.build.dependsOn(shadowJar/*, publishing*/)
