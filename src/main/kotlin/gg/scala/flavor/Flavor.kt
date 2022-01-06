@@ -87,11 +87,22 @@ class Flavor(
                 close?.invoke(entry.value)
             }
 
-            options.logger.info {
-                "[Services] Shutdown [${
-                    service?.name ?: entry.key
-                        .java.simpleName
-                }] in ${milli}ms."
+            if (milli != -1L)
+            {
+                options.logger.info {
+                    "[Services] Shutdown [${
+                        service?.name ?: entry.key
+                            .java.simpleName
+                    }] in ${milli}ms."
+                }
+            } else
+            {
+                options.logger.info {
+                    "[Services] Failed to shutdown [${
+                        service?.name ?: entry.key
+                            .java.simpleName
+                    }]!"
+                }
             }
         }
     }
@@ -99,7 +110,15 @@ class Flavor(
     private fun tracked(lambda: () -> Unit): Long
     {
         val start = System.currentTimeMillis()
-        lambda.invoke()
+
+        try
+        {
+            lambda.invoke()
+        } catch (exception: Exception)
+        {
+            exception.printStackTrace()
+            return -1
+        }
 
         return System.currentTimeMillis() - start
     }
@@ -169,7 +188,7 @@ class Flavor(
                 .firstOrNull { it.isAnnotationPresent(Configure::class.java) }
 
             // singletons should always be non-null
-            services[clazz] = singleton!!
+            services[clazz] = singleton
 
             val service = clazz.java
                 .getDeclaredAnnotation(Service::class.java)
@@ -178,12 +197,22 @@ class Flavor(
                 configure?.invoke(singleton)
             }
 
-            options.logger.info {
-                "[Services] Loaded [${
-                    service.name.ifEmpty {
-                        clazz.java.simpleName
-                    }
-                }] in ${milli}ms."
+            if (milli != -1L)
+            {
+                options.logger.info {
+                    "[Services] Loaded [${
+                        service?.name ?: clazz
+                            .java.simpleName
+                    }] in ${milli}ms."
+                }
+            } else
+            {
+                options.logger.info {
+                    "[Services] Failed to load [${
+                        service?.name ?: clazz
+                            .java.simpleName
+                    }]!"
+                }
             }
         }
     }
