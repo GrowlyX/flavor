@@ -66,10 +66,21 @@ class Flavor(
      * @throws InstantiationException
      * if instance creation fails
      */
-    inline fun <reified T : Any> injected(): T
+    inline fun <reified T : Any> injected(
+        vararg params: Any
+    ): T
     {
-        val instance = T::class
-            .java.newInstance()
+        val instance = T::class.java.let { clazz ->
+            if (params.isEmpty())
+            {
+                clazz.newInstance()
+            } else
+            {
+                clazz.getConstructor(
+                    *params.map { it.javaClass }.toTypedArray()
+                ).newInstance(params)
+            }
+        }
 
         inject(instance)
         return instance
