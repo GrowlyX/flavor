@@ -6,7 +6,6 @@ import gg.scala.flavor.service.Close
 import gg.scala.flavor.service.Configure
 import gg.scala.flavor.service.Service
 import gg.scala.flavor.service.ignore.IgnoreAutoScan
-import java.util.logging.Logger
 import kotlin.reflect.KClass
 
 /**
@@ -32,6 +31,14 @@ class Flavor(
     val binders = mutableListOf<FlavorBinder<*>>()
     val services = mutableMapOf<KClass<*>, Any>()
 
+    /**
+     * Searches for & returns a
+     * service matching type [T].
+     *
+     * @return the service
+     * @throws RuntimeException if there is
+     * no service matching type [T].
+     */
     inline fun <reified T> service(): T
     {
         val service = services[T::class]
@@ -40,6 +47,9 @@ class Flavor(
         return service as T
     }
 
+    /**
+     * Creates a new [FlavorBinder] for type [T].
+     */
     inline fun <reified T : Any> bind(): FlavorBinder<T>
     {
         val binder = FlavorBinder(T::class)
@@ -48,6 +58,26 @@ class Flavor(
         return binder
     }
 
+    /**
+     * Creates & inject a new
+     * instance of [T].
+     *
+     * @return the injected instance of [T]
+     * @throws InstantiationException
+     * if instance creation fails
+     */
+    inline fun <reified T : Any> injected(): T
+    {
+        val instance = T::class
+            .java.newInstance()
+
+        inject(instance)
+        return instance
+    }
+
+    /**
+     * Injects fields into a pre-existing class, [any].
+     */
     fun inject(any: Any)
     {
         scanAndInject(any::class)
