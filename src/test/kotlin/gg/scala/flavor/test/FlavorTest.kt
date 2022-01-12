@@ -2,6 +2,7 @@ package gg.scala.flavor.test
 
 import gg.scala.flavor.Flavor
 import gg.scala.flavor.inject.Inject
+import gg.scala.flavor.inject.condition.Named
 import org.junit.jupiter.api.Test
 
 /**
@@ -14,7 +15,11 @@ class FlavorTest
     fun onInjectorTest()
     {
         val flavor = Flavor.create<FlavorTest>()
-        flavor.bind<String>() to "hello world"
+        flavor
+            .bind<String>()
+            .annotated<Named> {
+                it.value == "your mom"
+            } to "hello world"
 
         val injected = flavor.injected<InjectorTest>(
             "hello", "world"
@@ -29,6 +34,7 @@ class FlavorTest
     )
     {
         @Inject
+        @Named("your mom")
         lateinit var helloWorld: String
     }
 }
