@@ -4,6 +4,7 @@ import gg.scala.flavor.Flavor
 import gg.scala.flavor.inject.Inject
 import gg.scala.flavor.inject.condition.Named
 import org.junit.jupiter.api.Test
+import kotlin.properties.Delegates
 
 /**
  * @author GrowlyX
@@ -15,10 +16,7 @@ class FlavorTest
     fun onInjectorTest()
     {
         val flavor = Flavor.create<FlavorTest>()
-        flavor.bind<String>()
-            .annotated<Named> {
-                it.value == "hello:world"
-            } to "hello world"
+        flavor.bind<String>() to "hello world"
 
         val injected = flavor.injected<InjectorTest>(
             "hello", "world"
@@ -32,7 +30,7 @@ class FlavorTest
         val world: String
     )
     {
-        @Inject @Named("hello:world")
-        lateinit var helloWorld: String
+        @Inject/* @delegate:Named("hello:world")*/
+        var helloWorld = ""
     }
 }

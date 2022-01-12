@@ -7,6 +7,7 @@ import gg.scala.flavor.service.Configure
 import gg.scala.flavor.service.Service
 import gg.scala.flavor.service.ignore.IgnoreAutoScan
 import kotlin.reflect.KClass
+import kotlin.reflect.jvm.kotlinProperty
 
 /**
  * @author GrowlyX
@@ -78,7 +79,9 @@ class Flavor(
             {
                 clazz.getConstructor(
                     *params.map { it.javaClass }.toTypedArray()
-                ).newInstance(params)
+                ).newInstance(
+                    *params.toList().toTypedArray()
+                )
             }
         }
 
@@ -91,7 +94,7 @@ class Flavor(
      */
     fun inject(any: Any)
     {
-        scanAndInject(any::class)
+        scanAndInject(any::class, any)
     }
 
     fun startup()
@@ -174,11 +177,28 @@ class Flavor(
         {
             null
         }
+
         val singleton = instance ?: singletonRaw!!
 
         for (field in clazz.java.fields)
         {
-            if (field.isAnnotationPresent(Inject::class.java))
+            // debug, ignore
+            val property = field.kotlinProperty
+            println(property)
+
+            property!!.annotations.forEach {
+                println(it.javaClass.name)
+            }
+
+            println(property.annotations.any {
+                it.javaClass == Inject::class.java
+            })
+
+            if (
+                property.annotations.any {
+                    it.javaClass == Inject::class.java
+                }
+            )
             {
                 val kotlinType = field.type.kotlin
 
@@ -186,9 +206,11 @@ class Flavor(
                     .filter { it.kClass == kotlinType }
                     .toMutableList()
 
+                println(bindersOfType)
+
                 for (flavorBinder in bindersOfType)
                 {
-                    for (annotation in field.annotations)
+                    for (annotation in property.annotations)
                     {
                         flavorBinder.annotationChecks[annotation::class]?.let {
                             val passesCheck = it.invoke(annotation)
