@@ -2,9 +2,7 @@ package gg.scala.flavor.test
 
 import gg.scala.flavor.Flavor
 import gg.scala.flavor.inject.Inject
-import gg.scala.flavor.inject.condition.Named
 import org.junit.jupiter.api.Test
-import kotlin.properties.Delegates
 
 /**
  * @author GrowlyX

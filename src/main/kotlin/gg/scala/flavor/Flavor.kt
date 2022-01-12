@@ -7,13 +7,6 @@ import gg.scala.flavor.service.Configure
 import gg.scala.flavor.service.Service
 import gg.scala.flavor.service.ignore.IgnoreAutoScan
 import kotlin.reflect.KClass
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.hasAnnotation
-import kotlin.reflect.jvm.isAccessible
-import kotlin.reflect.jvm.javaField
-import kotlin.reflect.jvm.kotlinProperty
-import kotlin.system.exitProcess
 
 /**
  * @author GrowlyX
@@ -194,14 +187,14 @@ class Flavor(
                     .filter { it.kClass.java == field.type }
                     .toMutableList()
 
-                println(bindersOfType)
-
                 for (flavorBinder in bindersOfType)
                 {
-                    for (annotation in field.declaredAnnotations)
+                    for (annotationCheck in flavorBinder.annotationChecks)
                     {
-                        flavorBinder.annotationChecks[annotation::class]?.let {
-                            val passesCheck = it.invoke(annotation)
+                        if (field.isAnnotationPresent(annotationCheck.key.java))
+                        {
+                            val annotation = field.getAnnotation(annotationCheck.key.java)
+                            val passesCheck = annotationCheck.value.invoke(annotation)
 
                             if (!passesCheck)
                             {
@@ -212,7 +205,7 @@ class Flavor(
                 }
 
                 val binder = bindersOfType.firstOrNull()
-                val accessability = field.isAccessible
+                val accessibility = field.isAccessible
 
                 binder?.let {
                     if (binder.scope == InjectScope.SINGLETON)
@@ -223,9 +216,9 @@ class Flavor(
                         }
                     }
 
-                    field.isAccessible = false
+                    field.isAccessible = true
                     field.set(singleton, it.instance)
-                    field.isAccessible = accessability
+                    field.isAccessible = accessibility
                 }
             }
         }

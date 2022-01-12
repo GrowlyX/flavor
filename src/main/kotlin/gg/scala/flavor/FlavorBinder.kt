@@ -24,7 +24,7 @@ class FlavorBinder<T : Any>(
         return this
     }
 
-    fun to(any: Any): FlavorBinder<T>
+    infix fun to(any: Any): FlavorBinder<T>
     {
         instance = any
         return this
