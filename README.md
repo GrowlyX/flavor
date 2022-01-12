@@ -1,5 +1,5 @@
 # flavor
-A light-weight kotlin (kotlin-jvm) dependency injection & service management framework. 
+A light-weight kotlin *(kotlin-jvm)* dependency injection & service management framework. 
 - Flavor is supposed to be an easy-to-use alternative to [guice](https://github.com/google/guice). 
 - We use kotlin-exclusive features such as [reified types & inline functions](https://kotlinlang.org/docs/inline-functions.html) heavily.
   - Due to this feature use, flavor will **NOT** work in java-only projects.
