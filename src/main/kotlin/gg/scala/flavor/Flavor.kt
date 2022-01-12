@@ -7,7 +7,13 @@ import gg.scala.flavor.service.Configure
 import gg.scala.flavor.service.Service
 import gg.scala.flavor.service.ignore.IgnoreAutoScan
 import kotlin.reflect.KClass
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.hasAnnotation
+import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.kotlinProperty
+import kotlin.system.exitProcess
 
 /**
  * @author GrowlyX
@@ -180,37 +186,19 @@ class Flavor(
 
         val singleton = instance ?: singletonRaw!!
 
-        for (field in clazz.java.fields)
+        for (field in clazz.java.declaredFields)
         {
-            // debug, ignore
-            val property = field.kotlinProperty
-            println(property)
-
-            property!!.annotations.forEach {
-                println(it.javaClass.name)
-            }
-
-            println(property.annotations.any {
-                it.javaClass == Inject::class.java
-            })
-
-            if (
-                property.annotations.any {
-                    it.javaClass == Inject::class.java
-                }
-            )
+            if (field.isAnnotationPresent(Inject::class.java))
             {
-                val kotlinType = field.type.kotlin
-
                 val bindersOfType = binders
-                    .filter { it.kClass == kotlinType }
+                    .filter { it.kClass.java == field.type }
                     .toMutableList()
 
                 println(bindersOfType)
 
                 for (flavorBinder in bindersOfType)
                 {
-                    for (annotation in property.annotations)
+                    for (annotation in field.declaredAnnotations)
                     {
                         flavorBinder.annotationChecks[annotation::class]?.let {
                             val passesCheck = it.invoke(annotation)

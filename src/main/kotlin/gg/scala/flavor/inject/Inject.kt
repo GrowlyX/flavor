@@ -7,6 +7,6 @@ package gg.scala.flavor.inject
 @Retention
 @Target(
     AnnotationTarget.FIELD,
-    AnnotationTarget.VALUE_PARAMETER
+    AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.PROPERTY_GETTER
 )
 annotation class Inject

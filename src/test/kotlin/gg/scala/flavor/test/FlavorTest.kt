@@ -30,7 +30,7 @@ class FlavorTest
         val world: String
     )
     {
-        @Inject/* @delegate:Named("hello:world")*/
-        var helloWorld = ""
+        @Inject
+        lateinit var helloWorld: String
     }
 }
