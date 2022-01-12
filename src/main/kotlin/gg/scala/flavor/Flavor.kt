@@ -98,8 +98,7 @@ class Flavor(
 
     fun startup()
     {
-        val classes = initializer
-            .getAllClasses()
+        val classes = initializer.getAllClasses()
 
         for (clazz in classes)
         {
