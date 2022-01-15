@@ -7,6 +7,13 @@ import gg.scala.flavor.service.Configure
 import gg.scala.flavor.service.Service
 import gg.scala.flavor.service.ignore.IgnoreAutoScan
 import kotlin.reflect.KClass
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.hasAnnotation
+import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaField
+import kotlin.reflect.jvm.kotlinProperty
+import kotlin.system.exitProcess
 
 /**
  * @author GrowlyX
@@ -98,7 +105,8 @@ class Flavor(
 
     fun startup()
     {
-        val classes = initializer.getAllClasses()
+        val classes = initializer
+            .getAllClasses()
 
         for (clazz in classes)
         {
@@ -133,16 +141,18 @@ class Flavor(
             {
                 options.logger.info {
                     "[Services] Shutdown [${
-                        service?.name ?: entry.key
-                            .java.simpleName
+                        service.name.ifEmpty {
+                            entry.key.java.simpleName
+                        }
                     }] in ${milli}ms."
                 }
             } else
             {
                 options.logger.info {
                     "[Services] Failed to shutdown [${
-                        service?.name ?: entry.key
-                            .java.simpleName
+                        service.name.ifEmpty {
+                            entry.key.java.simpleName
+                        }
                     }]!"
                 }
             }
@@ -186,14 +196,14 @@ class Flavor(
                     .filter { it.kClass.java == field.type }
                     .toMutableList()
 
+                println(bindersOfType)
+
                 for (flavorBinder in bindersOfType)
                 {
-                    for (annotationCheck in flavorBinder.annotationChecks)
+                    for (annotation in field.declaredAnnotations)
                     {
-                        if (field.isAnnotationPresent(annotationCheck.key.java))
-                        {
-                            val annotation = field.getAnnotation(annotationCheck.key.java)
-                            val passesCheck = annotationCheck.value.invoke(annotation)
+                        flavorBinder.annotationChecks[annotation::class]?.let {
+                            val passesCheck = it.invoke(annotation)
 
                             if (!passesCheck)
                             {
@@ -204,7 +214,7 @@ class Flavor(
                 }
 
                 val binder = bindersOfType.firstOrNull()
-                val accessibility = field.isAccessible
+                val accessability = field.isAccessible
 
                 binder?.let {
                     if (binder.scope == InjectScope.SINGLETON)
@@ -215,9 +225,9 @@ class Flavor(
                         }
                     }
 
-                    field.isAccessible = true
+                    field.isAccessible = false
                     field.set(singleton, it.instance)
-                    field.isAccessible = accessibility
+                    field.isAccessible = accessability
                 }
             }
         }
@@ -244,16 +254,18 @@ class Flavor(
             {
                 options.logger.info {
                     "[Services] Loaded [${
-                        service?.name ?: clazz
-                            .java.simpleName
+                        service.name.ifEmpty {
+                            clazz.java.simpleName
+                        }
                     }] in ${milli}ms."
                 }
             } else
             {
                 options.logger.info {
                     "[Services] Failed to load [${
-                        service?.name ?: clazz
-                            .java.simpleName
+                        service.name.ifEmpty {
+                            clazz.java.simpleName
+                        }
                     }]!"
                 }
             }
