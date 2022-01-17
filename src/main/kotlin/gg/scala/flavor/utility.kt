@@ -1,6 +1,9 @@
 package gg.scala.flavor
 
+import java.io.IOException
+import java.security.CodeSource
 import java.util.*
+import java.util.jar.JarFile
 import kotlin.reflect.KClass
 
 /**
@@ -19,19 +22,59 @@ fun KClass<*>.getBasePackage(): String
 
 fun KClass<*>.getAllClasses(): List<Class<*>>
 {
-    return getLoadedClasses()
-        .filter {
-            it.`package` != null && it.`package`.name.startsWith(this.getBasePackage())
-        }
-}
+    val classes: MutableCollection<Class<*>> = ArrayList<Class<*>>()
 
-fun getLoadedClasses(): Vector<Class<*>>
-{
-    val classLoader = Thread.currentThread().contextClassLoader
-    val classesField = ClassLoader::class.java.getDeclaredField("classes")
-        .apply {
-            this.isAccessible = true
-        }
+    val codeSource: CodeSource = this.java.getProtectionDomain().getCodeSource()
+    val resource = codeSource.location
+    val relPath: String = getBasePackage().replace('.', '/')
+    val resPath = resource.path.replace("%20", " ")
+    val jarPath = resPath.replaceFirst("[.]jar[!].*".toRegex(), ".jar").replaceFirst("file:".toRegex(), "")
 
-    return (classesField.get(classLoader) as Vector<Class<*>>).clone() as Vector<Class<*>>
+    val jarFile: JarFile
+
+    jarFile = try
+    {
+        JarFile(jarPath)
+    } catch (e: IOException)
+    {
+        throw RuntimeException("Unexpected IOException reading JAR File '$jarPath'", e)
+    }
+
+    val entries = jarFile.entries()
+
+    while (entries.hasMoreElements())
+    {
+        val entry = entries.nextElement()
+        val entryName = entry.name
+        var className: String? = null
+        if (entryName.endsWith(".class") && entryName.startsWith(relPath) && entryName.length > relPath.length + "/".length)
+        {
+            className = entryName.replace('/', '.').replace('\\', '.').replace(".class", "")
+        }
+        if (className != null)
+        {
+            var clazz: Class<*>? = null
+            try
+            {
+                clazz = Class.forName(className)
+            } catch (e: ClassNotFoundException)
+            {
+                e.printStackTrace()
+            }
+            if (clazz != null)
+            {
+                classes.add(clazz)
+            }
+        }
+    }
+
+    try
+    {
+        jarFile.close()
+    } catch (e: IOException)
+    {
+        e.printStackTrace()
+    }
+
+    return classes.toList()
 }
