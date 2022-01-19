@@ -6,6 +6,8 @@
 # Mac
 .DS_Store
 
+gradle.properties
+
 # Maven
 log/
 /target/

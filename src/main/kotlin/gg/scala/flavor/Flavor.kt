@@ -196,8 +196,6 @@ class Flavor(
                     .filter { it.kClass.java == field.type }
                     .toMutableList()
 
-                println(bindersOfType)
-
                 for (flavorBinder in bindersOfType)
                 {
                     for (annotation in field.declaredAnnotations)
