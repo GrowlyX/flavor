@@ -5,6 +5,9 @@ import kotlin.properties.Delegates
 import kotlin.reflect.KClass
 
 /**
+ * A wrapper class to easily
+ * create and register a flavor binder.
+ *
  * @author GrowlyX
  * @since 1/2/2022
  */
