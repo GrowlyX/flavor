@@ -26,6 +26,10 @@ class Flavor(
 {
     companion object
     {
+        /**
+         * Creates a new [Flavor] instance using [T]'s [KClass], 
+         * and the [options], if any are given.
+         */
         @JvmStatic
         inline fun <reified T> create(
             options: FlavorOptions = FlavorOptions()
@@ -103,6 +107,10 @@ class Flavor(
         scanAndInject(any::class, any)
     }
 
+    /**
+     * Scans & injects any services and/or singletons (kt objects) 
+     * that contain fields annotated with [Inject].
+     */
     fun startup()
     {
         val classes = initializer
@@ -123,6 +131,10 @@ class Flavor(
         }
     }
 
+    /**
+     * Invokes the `close` method in all registered services. If a 
+     * service does not have a close method, the service will be skipped.
+     */
     fun close()
     {
         for (entry in services.entries)
@@ -158,7 +170,14 @@ class Flavor(
             }
         }
     }
-
+    
+    /**
+     * Invokes the provided [lambda] while keeping track of 
+     * the amount of time it took to run in milliseconds.
+     * 
+     * Any exception thrown within the lambda will be printed,
+     * and `-1` will be returned.
+     */
     private fun tracked(lambda: () -> Unit): Long
     {
         val start = System.currentTimeMillis()
@@ -175,23 +194,24 @@ class Flavor(
         return System.currentTimeMillis() - start
     }
 
+    /**
+     * Scans & injects a provided [KClass], along with its 
+     * singleton instance if there is one.
+     */
     private fun scanAndInject(clazz: KClass<*>, instance: Any? = null)
     {
-        val singletonRaw = try
-        {
-            InjectScope.SINGLETON
-                .instanceCreator.invoke(clazz)
-        } catch (exception: Exception)
-        {
-            null
-        }
-
-        val singleton = instance ?: singletonRaw!!
+        // use the provided instance, or the singleton 
+        // we got through KClass#objectInstance.
+        val singleton = instance ?: clazz.objectInstance!!
 
         for (field in clazz.java.declaredFields)
         {
+            // making sure this field is annotated with
+            // Inject before modifying its value.
             if (field.isAnnotationPresent(Inject::class.java))
             {
+                // trying to find [FlavorBinder]s
+                // of the field's type
                 val bindersOfType = binders
                     .filter { it.kClass.java == field.type }
                     .toMutableList()
@@ -200,6 +220,8 @@ class Flavor(
                 {
                     for (annotation in field.declaredAnnotations)
                     {
+                        // making sure if there are any annotation 
+                        // checks, that the field passes the check
                         flavorBinder.annotationChecks[annotation::class]?.let {
                             val passesCheck = it.invoke(annotation)
 
@@ -211,16 +233,16 @@ class Flavor(
                     }
                 }
 
+                // retrieving the first binder of the field's type
                 val binder = bindersOfType.firstOrNull()
                 val accessability = field.isAccessible
 
                 binder?.let {
+                    // verifying the scope state of the binder
                     if (binder.scope == InjectScope.SINGLETON)
                     {
                         if (singletonRaw == null)
-                        {
                             return@let
-                        }
                     }
 
                     field.isAccessible = false
@@ -230,10 +252,11 @@ class Flavor(
             }
         }
 
-        val isServiceSingleton = clazz.java
+        // checking if this class is a service
+        val isServiceClazz = clazz.java
             .isAnnotationPresent(Service::class.java)
 
-        if (isServiceSingleton)
+        if (isServiceClazz)
         {
             val configure = clazz.java.declaredMethods
                 .firstOrNull { it.isAnnotationPresent(Configure::class.java) }
@@ -248,6 +271,8 @@ class Flavor(
                 configure?.invoke(singleton)
             }
 
+            // making sure an exception wasn't thrown 
+            // while trying to configure the service
             if (milli != -1L)
             {
                 options.logger.info {
@@ -269,5 +294,4 @@ class Flavor(
             }
         }
     }
-
 }
