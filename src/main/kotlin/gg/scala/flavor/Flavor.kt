@@ -27,7 +27,7 @@ class Flavor(
     companion object
     {
         /**
-         * Creates a new [Flavor] instance using [T]'s [KClass], 
+         * Creates a new [Flavor] instance using [T]'s [KClass],
          * and the [options], if any are given.
          */
         @JvmStatic
@@ -108,7 +108,7 @@ class Flavor(
     }
 
     /**
-     * Scans & injects any services and/or singletons (kt objects) 
+     * Scans & injects any services and/or singletons (kt objects)
      * that contain fields annotated with [Inject].
      */
     fun startup()
@@ -135,7 +135,7 @@ class Flavor(
     }
 
     /**
-     * Invokes the `close` method in all registered services. If a 
+     * Invokes the `close` method in all registered services. If a
      * service does not have a close method, the service will be skipped.
      */
     fun close()
@@ -173,11 +173,11 @@ class Flavor(
             }
         }
     }
-    
+
     /**
-     * Invokes the provided [lambda] while keeping track of 
+     * Invokes the provided [lambda] while keeping track of
      * the amount of time it took to run in milliseconds.
-     * 
+     *
      * Any exception thrown within the lambda will be printed,
      * and `-1` will be returned.
      */
@@ -198,12 +198,12 @@ class Flavor(
     }
 
     /**
-     * Scans & injects a provided [KClass], along with its 
+     * Scans & injects a provided [KClass], along with its
      * singleton instance if there is one.
      */
     private fun scanAndInject(clazz: KClass<*>, instance: Any? = null)
     {
-        // use the provided instance, or the singleton 
+        // use the provided instance, or the singleton
         // we got through KClass#objectInstance.
         val singleton = instance ?: clazz.objectInstance!!
 
@@ -223,7 +223,7 @@ class Flavor(
                 {
                     for (annotation in field.declaredAnnotations)
                     {
-                        // making sure if there are any annotation 
+                        // making sure if there are any annotation
                         // checks, that the field passes the check
                         flavorBinder.annotationChecks[annotation::class]?.let {
                             val passesCheck = it.invoke(annotation)
@@ -244,7 +244,7 @@ class Flavor(
                     // verifying the scope state of the binder
                     if (binder.scope == InjectScope.SINGLETON)
                     {
-                        if (singletonRaw == null)
+                        if (instance == null)
                             return@let
                     }
 
@@ -274,7 +274,7 @@ class Flavor(
                 configure?.invoke(singleton)
             }
 
-            // making sure an exception wasn't thrown 
+            // making sure an exception wasn't thrown
             // while trying to configure the service
             if (milli != -1L)
             {
