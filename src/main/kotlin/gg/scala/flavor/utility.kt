@@ -20,13 +20,15 @@ fun KClass<*>.getBasePackage(): String
     ).joinToString(".")
 }
 
-fun KClass<*>.getAllClasses(): List<Class<*>>
+fun KClass<*>.getAllClasses(
+    flavorOptions: FlavorOptions
+): List<Class<*>>
 {
     val classes: MutableCollection<Class<*>> = ArrayList<Class<*>>()
 
     val codeSource: CodeSource = this.java.getProtectionDomain().getCodeSource()
     val resource = codeSource.location
-    val relPath: String = getBasePackage().replace('.', '/')
+    val relPath: String = (flavorOptions.`package` ?: getBasePackage()).replace('.', '/')
     val resPath = resource.path.replace("%20", " ")
     val jarPath = resPath.replaceFirst("[.]jar[!].*".toRegex(), ".jar").replaceFirst("file:".toRegex(), "")
 

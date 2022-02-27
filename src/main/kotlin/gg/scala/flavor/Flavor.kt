@@ -113,7 +113,7 @@ class Flavor(
      */
     fun startup()
     {
-        val classes = initializer.getAllClasses()
+        val classes = initializer.getAllClasses(options)
             .sortedByDescending {
                 it.getAnnotation(Service::class.java)
                     ?.priority ?: 1
