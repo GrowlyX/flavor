@@ -6,7 +6,10 @@ import gg.scala.flavor.service.Close
 import gg.scala.flavor.service.Configure
 import gg.scala.flavor.service.Service
 import gg.scala.flavor.service.ignore.IgnoreAutoScan
+import java.lang.reflect.Method
+import java.util.logging.Level
 import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.hasAnnotation
@@ -41,6 +44,16 @@ class Flavor(
 
     val binders = mutableListOf<FlavorBinder<*>>()
     val services = mutableMapOf<KClass<*>, Any>()
+
+    val scanners =
+        mutableMapOf<KClass<out Annotation>, (Method) -> Unit>()
+
+    inline fun <reified T : Annotation> listen(
+        noinline lambda: (Method) -> Unit
+    )
+    {
+        scanners[T::class] = lambda
+    }
 
     /**
      * Searches for & returns a
@@ -251,6 +264,27 @@ class Flavor(
                     field.isAccessible = false
                     field.set(singleton, it.instance)
                     field.isAccessible = accessability
+                }
+            }
+        }
+
+        for (method in clazz.java.declaredMethods)
+        {
+            val annotations = method.annotations
+                .filter { scanners[it::class] != null }
+
+            for (annotation in annotations)
+            {
+                try
+                {
+                    scanners[annotation::class]?.invoke(method)
+                } catch (exception: Exception)
+                {
+                    options.logger.log(
+                        Level.SEVERE,
+                        "Error occured while invoking function",
+                        exception
+                    )
                 }
             }
         }
