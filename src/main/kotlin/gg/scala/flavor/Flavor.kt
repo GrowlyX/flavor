@@ -46,10 +46,10 @@ class Flavor(
     val services = mutableMapOf<KClass<*>, Any>()
 
     val scanners =
-        mutableMapOf<KClass<out Annotation>, (Method) -> Unit>()
+        mutableMapOf<KClass<out Annotation>, (Method, Any) -> Unit>()
 
     inline fun <reified T : Annotation> listen(
-        noinline lambda: (Method) -> Unit
+        noinline lambda: (Method, Any) -> Unit
     )
     {
         scanners[T::class] = lambda
@@ -277,12 +277,13 @@ class Flavor(
             {
                 try
                 {
-                    scanners[annotation::class]?.invoke(method)
+                    scanners[annotation::class]
+                        ?.invoke(method, singleton)
                 } catch (exception: Exception)
                 {
                     options.logger.log(
                         Level.SEVERE,
-                        "Error occured while invoking function",
+                        "Error occurred while invoking function",
                         exception
                     )
                 }
