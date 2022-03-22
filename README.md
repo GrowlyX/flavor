@@ -5,7 +5,7 @@ A light-weight [kotlin](https://kotlinlang.org) dependency injection & lifecycle
 - We use kotlin-exclusive features such as [reified types & inline functions](https://kotlinlang.org/docs/inline-functions.html) heavily.
   - Due to this, flavor is only compatible with kotlin-exclusive projects.
     - I do not plan on adding support for other JVM languages.
-- Hate my code? Dispise annotations? Check out [depenject](https://github.com/devrawr/depenject) by [string](https://github.com/devrawr).
+- Hate my code? Despise annotations? Check out [depenject](https://github.com/devrawr/depenject) by [string](https://github.com/devrawr).
   - Depenject takes a delegate-based approach, rather than annotation-based. This is achieved by using Kotlin's [ReadWriteProperty](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.properties/-read-write-property/).
     - Unfortunately, the delegate based approach makes it unusable in languages other than kotlin.
 
