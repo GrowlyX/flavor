@@ -1,9 +1,24 @@
 # flavor
-A light-weight kotlin *(kotlin-jvm)* dependency injection & service management framework. 
+A light-weight [kotlin](https://kotlinlang.org) dependency injection & lifecycle management framework. 
 - Flavor is supposed to be an easy-to-use alternative to [guice](https://github.com/google/guice). 
+  - Flavor also incorperates several design elements from [HK2](https://javaee.github.io/hk2/), a DI framework.
 - We use kotlin-exclusive features such as [reified types & inline functions](https://kotlinlang.org/docs/inline-functions.html) heavily.
-  - Due to this feature use, flavor will **NOT** work in java-only projects.
-  - An update will be released if this changes in the future.
+  - Due to this, flavor is only compatible with kotlin-exclusive projects.
+    - I do not plan on adding support for other JVM languages.
+- Hate my code? Dispise annotations? Check out [depenject](https://github.com/devrawr/depenject) by [string](https://github.com/devrawr).
+  - Depenject takes a delegate-based approach, rather than annotation-based. This is achieved by using Kotlin's [ReadWriteProperty](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.properties/-read-write-property/).
+    - Unfortunately, the delegate based approach makes it unusable in languages other than kotlin.
+
+## Features:
+- **[Services:](https://github.com/GrowlyX/flavor/tree/master/src/main/kotlin/gg/scala/flavor/service)**
+  - Searches all singletons (kotlin objects) within a specified package for objects marked with [@Service](https://github.com/GrowlyX/flavor/blob/master/src/main/kotlin/gg/scala/flavor/service/Service.kt).
+  - Control lifecycle through the [@Configure](https://github.com/GrowlyX/flavor/blob/master/src/main/kotlin/gg/scala/flavor/service/Close.kt) and [@Close](https://github.com/GrowlyX/flavor/blob/master/src/main/kotlin/gg/scala/flavor/service/Close.kt) annotations.
+- **[DI:](https://github.com/GrowlyX/flavor/blob/master/src/main/kotlin/gg/scala/flavor/Flavor.kt)**
+  - Allows for simple yet effective dependency injection in both objects & classes.
+  - Similar to almost every other DI framework, fields are injected eagerly.
+    - You can create a simple work-around to this by injecting a [lazy](https://kotlinlang.org/docs/delegated-properties.html#lazy-properties) delegate.
+- **[Listeners:](https://github.com/GrowlyX/flavor/blob/master/src/main/kotlin/gg/scala/flavor/Flavor.kt#L51)**
+  - Allows for a simple yet effective method to look for methods with specific annotations on startup. 
 
 ## Usage:
 Creating a Flavor instance:
@@ -17,16 +32,13 @@ val flavor = Flavor.create<FlavorTest>(
 Binding a class to an instance:
 ```kt
 flavor.bind<SomeObject>()
-    // We will only inject this binder 
-    // into singletons
-    .scoped(InjectScope.SINGLETON)
     .annotated<Named> {
         it.value == "SomethingString"
     }
     .to(someObjectInstance)
 ```
 
-Creating an injected class:
+Instantiating an injected class (with optional parameters):
 ```kt
 flavor.injected<SomeObjectInjected>(
     // These constructor parameters are not required.
