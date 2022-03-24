@@ -23,8 +23,8 @@ import kotlin.system.exitProcess
  * @since 1/2/2022
  */
 class Flavor(
-    private val initializer: KClass<*>,
-    private val options: FlavorOptions
+    val initializer: KClass<*>,
+    val options: FlavorOptions
 )
 {
     companion object
@@ -39,6 +39,15 @@ class Flavor(
         ): Flavor
         {
             return Flavor(T::class, options)
+        }
+
+        @JvmStatic
+        fun create(
+            initializer: KClass<*>,
+            options: FlavorOptions = FlavorOptions()
+        ): Flavor
+        {
+            return Flavor(initializer, options)
         }
     }
 
@@ -80,6 +89,16 @@ class Flavor(
         binders.add(binder)
 
         return binder
+    }
+
+    inline fun <reified A : Annotation> findSingletons(): List<Any>
+    {
+        return initializer
+            .getAllClasses(options)
+            .mapNotNull { it.kotlin.objectInstance }
+            .filter {
+                it.javaClass.isAnnotationPresent(A::class.java)
+            }
     }
 
     /**
