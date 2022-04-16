@@ -2,10 +2,12 @@ package gg.scala.flavor
 
 import gg.scala.flavor.inject.Inject
 import gg.scala.flavor.inject.InjectScope
+import gg.scala.flavor.reflections.PackageIndexer
 import gg.scala.flavor.service.Close
 import gg.scala.flavor.service.Configure
 import gg.scala.flavor.service.Service
 import gg.scala.flavor.service.ignore.IgnoreAutoScan
+import org.reflections.scanners.Scanners
 import java.lang.reflect.Method
 import java.util.logging.Level
 import kotlin.reflect.KClass
@@ -51,6 +53,8 @@ class Flavor(
         }
     }
 
+    val reflections = PackageIndexer(initializer, options)
+
     val binders = mutableListOf<FlavorBinder<*>>()
     val services = mutableMapOf<KClass<*>, Any>()
 
@@ -93,8 +97,7 @@ class Flavor(
 
     inline fun <reified A : Annotation> findSingletons(): List<Any>
     {
-        return initializer
-            .getAllClasses(options)
+        return reflections.getTypesAnnotatedWith<A>()
             .mapNotNull { it.kotlin.objectInstance }
             .filter {
                 it.javaClass.isAnnotationPresent(A::class.java)
@@ -145,7 +148,8 @@ class Flavor(
      */
     fun startup()
     {
-        val classes = initializer.getAllClasses(options)
+        val classes = reflections
+            .getTypesAnnotatedWith<Service>()
             .sortedByDescending {
                 it.getAnnotation(Service::class.java)
                     ?.priority ?: 1
@@ -153,15 +157,12 @@ class Flavor(
 
         for (clazz in classes)
         {
-            try
+            val ignoreAutoScan = clazz
+                .getAnnotation(IgnoreAutoScan::class.java)
+
+            if (ignoreAutoScan == null)
             {
-                if (!clazz.isAnnotationPresent(IgnoreAutoScan::class.java))
-                {
-                    scanAndInject(clazz.kotlin)
-                }
-            } catch (e: Exception)
-            {
-                continue
+                scanAndInject(clazz.kotlin)
             }
         }
     }
