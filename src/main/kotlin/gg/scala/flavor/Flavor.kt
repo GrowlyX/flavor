@@ -7,18 +7,9 @@ import gg.scala.flavor.service.Close
 import gg.scala.flavor.service.Configure
 import gg.scala.flavor.service.Service
 import gg.scala.flavor.service.ignore.IgnoreAutoScan
-import org.reflections.scanners.Scanners
 import java.lang.reflect.Method
 import java.util.logging.Level
 import kotlin.reflect.KClass
-import kotlin.reflect.KFunction
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.hasAnnotation
-import kotlin.reflect.jvm.isAccessible
-import kotlin.reflect.jvm.javaField
-import kotlin.reflect.jvm.kotlinProperty
-import kotlin.system.exitProcess
 
 /**
  * @author GrowlyX
@@ -98,7 +89,7 @@ class Flavor(
     inline fun <reified A : Annotation> findSingletons(): List<Any>
     {
         return reflections.getTypesAnnotatedWith<A>()
-            .mapNotNull { it.kotlin.objectInstance }
+            .mapNotNull { it.objectInstance() }
             .filter {
                 it.javaClass.isAnnotationPresent(A::class.java)
             }
@@ -162,7 +153,11 @@ class Flavor(
 
             if (ignoreAutoScan == null)
             {
-                scanAndInject(clazz.kotlin)
+                kotlin.runCatching {
+                    scanAndInject(clazz.kotlin)
+                }.onFailure {
+                    options.logger.log(Level.WARNING, "An exception was thrown during injection", it)
+                }
             }
         }
     }
@@ -238,7 +233,8 @@ class Flavor(
     {
         // use the provided instance, or the singleton
         // we got through KClass#objectInstance.
-        val singleton = instance ?: clazz.objectInstance!!
+        val singleton = instance
+            ?: clazz.java.objectInstance()!!
 
         for (field in clazz.java.declaredFields)
         {
@@ -271,7 +267,7 @@ class Flavor(
 
                 // retrieving the first binder of the field's type
                 val binder = bindersOfType.firstOrNull()
-                val accessability = field.isAccessible
+                val accessibility = field.isAccessible
 
                 binder?.let {
                     // verifying the scope state of the binder
@@ -283,7 +279,7 @@ class Flavor(
 
                     field.isAccessible = false
                     field.set(singleton, it.instance)
-                    field.isAccessible = accessability
+                    field.isAccessible = accessibility
                 }
             }
         }
@@ -351,5 +347,12 @@ class Flavor(
                 }
             }
         }
+    }
+
+    fun Class<*>.objectInstance(): Any?
+    {
+        return kotlin.runCatching {
+            getDeclaredField("INSTANCE").get(null)
+        }.getOrNull()
     }
 }
