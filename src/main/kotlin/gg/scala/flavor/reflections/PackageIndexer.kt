@@ -5,6 +5,7 @@ import org.reflections.Reflections
 import org.reflections.Store
 import org.reflections.scanners.MethodAnnotationsScanner
 import org.reflections.scanners.Scanners
+import org.reflections.scanners.SubTypesScanner
 import org.reflections.scanners.TypeAnnotationsScanner
 import org.reflections.util.ConfigurationBuilder
 import org.reflections.util.QueryFunction
@@ -30,9 +31,17 @@ class PackageIndexer(
 
                 .addScanners(
                     MethodAnnotationsScanner(),
-                    TypeAnnotationsScanner()
+                    TypeAnnotationsScanner(),
+                    SubTypesScanner()
                 )
         )
+
+    inline fun <reified T> getSubTypes(): List<Class<*>>
+    {
+        return reflections
+            .get(subTypes<T>())
+            .toList()
+    }
 
     inline fun <reified T : Annotation> getMethodsAnnotatedWith(): List<Method>
     {
@@ -53,5 +62,12 @@ class PackageIndexer(
         return Scanners.MethodsAnnotated
             .with(T::class.java)
             .`as`(Method::class.java)
+    }
+
+    inline fun <reified T> subTypes(): QueryFunction<Store, Class<*>>
+    {
+        return Scanners.SubTypes
+            .with(T::class.java)
+            .`as`(Class::class.java)
     }
 }
