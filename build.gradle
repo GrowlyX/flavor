@@ -33,7 +33,7 @@ shadowJar {
     exclude "**/*.kotlin_builtins"
     exclude "META-INF/"
 
-    archiveFileName = "aware.jar"
+    archiveFileName = "flavor.jar"
 }
 
 publishing {
