@@ -154,7 +154,7 @@ class Flavor(
             if (ignoreAutoScan == null)
             {
                 kotlin.runCatching {
-                    scanAndInject(clazz.kotlin, clazz.kotlin.objectInstance)
+                    scanAndInject(clazz.kotlin, clazz.objectInstance())
                 }.onFailure {
                     options.logger.log(Level.WARNING, "An exception was thrown during injection", it)
                 }
@@ -234,7 +234,7 @@ class Flavor(
         // use the provided instance, or the singleton
         // we got through KClass#objectInstance.
         val singleton = instance
-            ?: clazz.objectInstance
+            ?: clazz.java.objectInstance()
             ?: return
 
         for (field in clazz.java.declaredFields)
@@ -352,8 +352,10 @@ class Flavor(
 
     fun Class<*>.objectInstance(): Any?
     {
-        return kotlin.runCatching {
-            getDeclaredField("INSTANCE").get(null)
-        }.getOrNull()
+        return kotlin
+            .runCatching {
+                getDeclaredField("INSTANCE").get(null)
+            }
+            .getOrNull()
     }
 }
