@@ -21,6 +21,12 @@ class FlavorBinderMultiType(
         return this
     }
 
+    fun to(kClass: KClass<*>): FlavorBinderMultiType
+    {
+        types += kClass
+        return this
+    }
+
     fun populate(populator: FlavorBinder<*>.() -> Unit): FlavorBinderMultiType
     {
         binderInternalPopulator = populator
