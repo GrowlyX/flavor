@@ -8,10 +8,10 @@ import kotlin.reflect.KClass
  * @since 9/6/2022
  */
 class FlavorBinderMultiType(
-    private val container: FlavorBinderContainer
+    private val container: FlavorBinderContainer,
+    private val instance: Any
 )
 {
-
     val types = mutableListOf<KClass<*>>()
     var binderInternalPopulator = { _: FlavorBinder<*> -> }
 
@@ -37,8 +37,9 @@ class FlavorBinderMultiType(
     {
         for (type in types)
         {
-            container.binders += FlavorBinder(type).apply(binderInternalPopulator)
+            container.binders += FlavorBinder(type)
+                .apply(binderInternalPopulator)
+                .to(instance)
         }
     }
-
 }

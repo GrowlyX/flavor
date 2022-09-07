@@ -12,5 +12,5 @@ abstract class FlavorBinderContainer
 
     abstract fun populate()
 
-    fun bind(any: Any) = FlavorBinderMultiType(this)
+    fun bind(`object`: Any) = FlavorBinderMultiType(this, `object`)
 }
