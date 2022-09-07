@@ -1,5 +1,6 @@
 package gg.scala.flavor
 
+import gg.scala.flavor.binder.FlavorBinderContainer
 import gg.scala.flavor.inject.Inject
 import gg.scala.flavor.inject.InjectScope
 import gg.scala.flavor.reflections.PackageIndexer
@@ -57,6 +58,17 @@ class Flavor(
     )
     {
         scanners[T::class] = lambda
+    }
+
+    /**
+     * Inherit an arbitrary [FlavorBinderContainer]
+     * and populate our binders with its ones.
+     */
+    fun inherit(container: FlavorBinderContainer): Flavor
+    {
+        container.populate()
+        binders += container.binders
+        return this
     }
 
     /**

@@ -28,7 +28,6 @@ class PackageIndexer(
                     options.`package` ?: this.clazz.java.`package`.name,
                     this.clazz.java.classLoader
                 )
-
                 .addScanners(
                     MethodAnnotationsScanner(),
                     TypeAnnotationsScanner(),

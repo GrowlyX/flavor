@@ -2,11 +2,11 @@ plugins {
     id "maven-publish"
     id "com.jfrog.artifactory" version "4.28.2"
     id "com.github.johnrengelman.shadow" version "7.1.2"
-    id "org.jetbrains.kotlin.jvm" version "1.7.0"
+    id "org.jetbrains.kotlin.jvm" version "1.7.10"
 }
 
 group "gg.scala.flavor"
-version "0.1.3.8"
+version "0.1.4"
 
 repositories {
     mavenCentral()
@@ -14,8 +14,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly "org.jetbrains.kotlin:kotlin-stdlib:1.7.0"
-    compileOnly "org.jetbrains.kotlin:kotlin-reflect:1.7.0"
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib:1.7.10"
+    compileOnly "org.jetbrains.kotlin:kotlin-reflect:1.7.10"
     compileOnly "org.reflections:reflections:0.10.2"
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.0'
@@ -28,11 +28,10 @@ compileKotlin {
 
 shadowJar {
     archiveClassifier.set("")
+    archiveFileName.set("flavor.jar")
 
     exclude "**/*.kotlin_metadata"
-    exclude "META-INF/"
-
-    archiveFileName = "flavor.jar"
+    mergeServiceFiles()
 }
 
 publishing {
@@ -69,6 +68,5 @@ artifactory {
 
 tasks.build.dependsOn(
     shadowJar,
-    publishShadowPublicationToScalaRepository,
-    artifactoryPublish
+    publishShadowPublicationToScalaRepository
 )
