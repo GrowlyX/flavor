@@ -1,6 +1,5 @@
 package gg.scala.flavor
 
-import gg.scala.flavor.inject.InjectScope
 import kotlin.properties.Delegates
 import kotlin.reflect.KClass
 
@@ -17,15 +16,7 @@ class FlavorBinder<T : Any>(
 )
 {
     val annotationChecks = mutableMapOf<KClass<out Annotation>, (Annotation) -> Boolean>()
-
     var instance by Delegates.notNull<Any>()
-    var scope = InjectScope.NO_SCOPE
-
-    fun scoped(scope: InjectScope): FlavorBinder<T>
-    {
-        this.scope = scope
-        return this
-    }
 
     infix fun to(any: Any): FlavorBinder<T>
     {

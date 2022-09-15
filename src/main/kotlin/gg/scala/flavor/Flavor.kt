@@ -2,12 +2,14 @@ package gg.scala.flavor
 
 import gg.scala.flavor.binder.FlavorBinderContainer
 import gg.scala.flavor.inject.Inject
-import gg.scala.flavor.inject.InjectScope
+import gg.scala.flavor.mappings.AnnotationType
+import gg.scala.flavor.mappings.InjectAnnotationMappings
 import gg.scala.flavor.reflections.PackageIndexer
 import gg.scala.flavor.service.Close
 import gg.scala.flavor.service.Configure
 import gg.scala.flavor.service.Service
 import gg.scala.flavor.service.ignore.IgnoreAutoScan
+import java.lang.IllegalStateException
 import java.lang.reflect.Method
 import java.util.logging.Level
 import kotlin.reflect.KClass
@@ -108,33 +110,47 @@ class Flavor(
     }
 
     /**
-     * Creates & inject a new
-     * instance of [T].
-     *
-     * @return the injected instance of [T]
-     * @throws InstantiationException
-     * if instance creation fails
+     * Creates & inject a new injected instance of [T].
      */
-    inline fun <reified T : Any> injected(
-        vararg params: Any
-    ): T
+    inline fun <reified T : Any> injected(): T
     {
-        val instance = T::class.java.let { clazz ->
-            if (params.isEmpty())
-            {
-                clazz.newInstance()
-            } else
-            {
-                clazz.getConstructor(
-                    *params.map { it.javaClass }.toTypedArray()
-                ).newInstance(
-                    *params.toList().toTypedArray()
-                )
+        val boundClasses = this.binders.map { it.kClass.java }
+
+        val constructor = T::class.java.constructors
+            .firstOrNull {
+                InjectAnnotationMappings
+                    .matchesAny(
+                        AnnotationType.Inject, it.annotations
+                    ) &&
+                        it.parameterTypes
+                            .all { type ->
+                                type in boundClasses
+                            }
             }
+            ?: throw IllegalStateException(
+                "Unable to find constructor with all fields injected"
+            )
+
+        val orderedInstances = mutableListOf<Any>()
+
+        constructor.parameters.forEach {
+            val injectionInstance = this
+                .findInstanceForInjection(
+                    it.type, it.annotations
+                )
+
+            orderedInstances += injectionInstance
         }
 
+        val instance = constructor
+            .newInstance(
+                *orderedInstances.toTypedArray()
+            )
+
+        // injection on instance variables marked with an injection annotation
         inject(instance)
-        return instance
+
+        return instance as T
     }
 
     /**
@@ -161,7 +177,9 @@ class Flavor(
         for (clazz in classes)
         {
             val ignoreAutoScan = clazz
-                .getAnnotation(IgnoreAutoScan::class.java)
+                .getAnnotation(
+                    IgnoreAutoScan::class.java
+                )
 
             if (ignoreAutoScan == null)
             {
@@ -237,6 +255,39 @@ class Flavor(
         return System.currentTimeMillis() - start
     }
 
+    fun findInstanceForInjection(type: Class<*>, annotations: Array<Annotation>): Any
+    {
+        // trying to find [FlavorBinder]s
+        // of the field's type
+        val bindersOfType = binders
+            .filter { it.kClass.java == type }
+            .toMutableList()
+
+        for (flavorBinder in bindersOfType)
+        {
+            for (annotation in annotations)
+            {
+                // making sure if there are any annotation
+                // checks, that the field passes the check
+                flavorBinder.annotationChecks[annotation::class]
+                    ?.let {
+                        val passesCheck = it.invoke(annotation)
+
+                        if (!passesCheck)
+                        {
+                            bindersOfType.remove(flavorBinder)
+                        }
+                    }
+            }
+        }
+
+        // retrieving the first binder of the field's type
+        return bindersOfType.firstOrNull()
+            ?: throw IllegalArgumentException(
+                "Did not find any binder for type ${type.simpleName} that satisfies $annotations"
+            )
+    }
+
     /**
      * Scans & injects a provided [KClass], along with its
      * singleton instance if there is one.
@@ -253,54 +304,27 @@ class Flavor(
         {
             // making sure this field is annotated with
             // Inject before modifying its value.
-            if (field.isAnnotationPresent(Inject::class.java))
+            if (InjectAnnotationMappings.matchesAny(AnnotationType.Inject, field.annotations))
             {
-                // trying to find [FlavorBinder]s
-                // of the field's type
-                val bindersOfType = binders
-                    .filter { it.kClass.java == field.type }
-                    .toMutableList()
+                val injectionInstance = this
+                    .findInstanceForInjection(
+                        field.type, field.annotations
+                    )
 
-                for (flavorBinder in bindersOfType)
-                {
-                    for (annotation in field.declaredAnnotations)
-                    {
-                        // making sure if there are any annotation
-                        // checks, that the field passes the check
-                        flavorBinder.annotationChecks[annotation::class]?.let {
-                            val passesCheck = it.invoke(annotation)
-
-                            if (!passesCheck)
-                            {
-                                bindersOfType.remove(flavorBinder)
-                            }
-                        }
-                    }
-                }
-
-                // retrieving the first binder of the field's type
-                val binder = bindersOfType.firstOrNull()
                 val accessibility = field.isAccessible
 
-                binder?.let {
-                    // verifying the scope state of the binder
-                    if (binder.scope == InjectScope.SINGLETON)
-                    {
-                        if (instance == null)
-                            return@let
-                    }
-
-                    field.isAccessible = false
-                    field.set(singleton, it.instance)
-                    field.isAccessible = accessibility
-                }
+                field.isAccessible = false
+                field.set(singleton, injectionInstance)
+                field.isAccessible = accessibility
             }
         }
 
         for (method in clazz.java.declaredMethods)
         {
             val annotations = method.annotations
-                .filter { scanners[it::class] != null }
+                .filter {
+                    scanners[it::class] != null
+                }
 
             for (annotation in annotations)
             {
