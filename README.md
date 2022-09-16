@@ -1,5 +1,5 @@
 # flavor
-A light-weight [kotlin](https://kotlinlang.org) dependency injection & lifecycle management framework. 
+A light-weight [kotlin](https://kotlinlang.org) dependency injection & lifecycle management IoC container. 
 - Flavor is supposed to be an easy-to-use alternative to [guice](https://github.com/google/guice). 
   - Flavor also incorperates several design elements from [HK2](https://javaee.github.io/hk2/), a DI framework.
 - We use kotlin-exclusive features such as [reified types & inline functions](https://kotlinlang.org/docs/inline-functions.html) heavily.
@@ -38,12 +38,21 @@ flavor.bind<SomeObject>()
     .to(someObjectInstance)
 ```
 
-Instantiating an injected class (with optional parameters):
+Instantiating an injected class:
+ - The closest constructor with all bound instances will be used.
 ```kt
-flavor.injected<SomeObjectInjected>(
-    // These constructor parameters are not required.
-    constructorParamOne, constructorParamTwo
-)
+flavor.injected<SomeObjectInjected>()
+```
+
+Binder modules (similar to Guice) can be created through a new `FlavorBinderContainer`:
+```kt
+@Override
+fun bind()
+{
+   
+}
+
+flavor.inherit(container)
 ```
 
 An example of a Flavor service:
@@ -53,18 +62,26 @@ An example of a Flavor service:
 // automatically register this service
 object SomeService
 {
-    @Inject @Named("SomethingString")
+    @Inject 
+    @Named("SomethingInjected")
     lateinit var something: String
     
-    @Configure
-    fun configure()
+    @Inject
+    @Named("SomethingInjected")
+    fun onInjectSomething(string: String)
+    {
+       // injection through methods
+    }
+    
+    @PostConstruct
+    fun postConstruct()
     {
         // this method is invoked once all 
         // fields have been injected!
     }
     
-    @Close
-    fun close()
+    @PreDestroy
+    fun preDestroy()
     {
         // this method is invoked on your 
         // platform's shutdown!
@@ -78,6 +95,7 @@ flavor.inject(instance)
 ```
 
 Your Flavor instance can be started and stopped using:
+ - All services will be automatically located and constructed on startup.
 ```kt
 flavor.startup()
 flavor.close()
@@ -89,7 +107,7 @@ gg.scala.flavor.FlavorTest - registration class
 gg.scala.flavor - package which flavor will scan
 ```
 
-*⚠️ There is currently no way to disable automatic scanning.*
+*⚠️ There is currently no way to disable auto service locator functionality.*
 
 ## Compilation:
 - Flavor is available on [jitpack.io](https://jitpack.io/#GrowlyX/flavor)
