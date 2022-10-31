@@ -1,5 +1,5 @@
 # flavor
-A light-weight [kotlin](https://kotlinlang.org) dependency injection & lifecycle management IoC container. 
+A light-weight [kotlin](https://kotlinlang.org) IoC container and lifecycle management framework. 
 - Flavor is supposed to be an easy-to-use alternative to [guice](https://github.com/google/guice). 
   - Flavor also incorperates several design elements from [HK2](https://javaee.github.io/hk2/), a DI framework.
 - We use kotlin-exclusive features such as [reified types & inline functions](https://kotlinlang.org/docs/inline-functions.html) heavily.
